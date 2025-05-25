@@ -1,0 +1,218 @@
+./sdriver.pl -t trace01.txt -s ./tsh -a "-p"
+#
+# trace01.txt - Properly terminate on EOF.
+#
+./sdriver.pl -t trace02.txt -s ./tsh -a "-p"
+#
+# trace02.txt - Process builtin quit command.
+#
+./sdriver.pl -t trace03.txt -s ./tsh -a "-p"
+#
+# trace03.txt - Run a foreground job.
+#
+tsh> quit
+./sdriver.pl -t trace04.txt -s ./tsh -a "-p"
+#
+# trace04.txt - Run a background job.
+#
+tsh> ./myspin 1 &
+[1] (5136) ./myspin 1 &
+./sdriver.pl -t trace05.txt -s ./tsh -a "-p"
+#
+# trace05.txt - Process jobs builtin command.
+#
+tsh> ./myspin 2 &
+[1] (5153) ./myspin 2 &
+tsh> ./myspin 3 &
+[2] (5155) ./myspin 3 &
+tsh> jobs
+[1] (5153) Running ./myspin 2 &
+[2] (5155) Running ./myspin 3 &
+./sdriver.pl -t trace06.txt -s ./tsh -a "-p"
+#
+# trace06.txt - Forward SIGINT to foreground job.
+#
+tsh> ./myspin 4
+Job [1] (5180) terminated by signal 2
+./sdriver.pl -t trace07.txt -s ./tsh -a "-p"
+#
+# trace07.txt - Forward SIGINT only to foreground job.
+#
+tsh> ./myspin 4 &
+[1] (5192) ./myspin 4 &
+tsh> ./myspin 5
+Job [2] (5194) terminated by signal 2
+tsh> jobs
+[1] (5192) Running ./myspin 4 &
+./sdriver.pl -t trace08.txt -s ./tsh -a "-p"
+#
+# trace08.txt - Forward SIGTSTP only to foreground job.
+#
+tsh> ./myspin 4 &
+[1] (5221) ./myspin 4 &
+tsh> ./myspin 5
+Job [2] (5223) stopped by signal 20
+tsh> jobs
+[1] (5221) Running ./myspin 4 &
+[2] (5223) Stopped ./myspin 5 
+./sdriver.pl -t trace09.txt -s ./tsh -a "-p"
+#
+# trace09.txt - Process bg builtin command
+#
+tsh> ./myspin 4 &
+[1] (5241) ./myspin 4 &
+tsh> ./myspin 5
+Job [2] (5243) stopped by signal 20
+tsh> jobs
+[1] (5241) Running ./myspin 4 &
+[2] (5243) Stopped ./myspin 5 
+tsh> bg %2
+[2] (5243) ./myspin 5 
+tsh> jobs
+[1] (5241) Running ./myspin 4 &
+[2] (5243) Running ./myspin 5 
+./sdriver.pl -t trace10.txt -s ./tsh -a "-p"
+#
+# trace10.txt - Process fg builtin command. 
+#
+tsh> ./myspin 4 &
+[1] (5271) ./myspin 4 &
+tsh> fg %1
+Job [1] (5271) stopped by signal 20
+tsh> jobs
+[1] (5271) Stopped ./myspin 4 &
+tsh> fg %1
+tsh> jobs
+./sdriver.pl -t trace11.txt -s ./tsh -a "-p"
+#
+# trace11.txt - Forward SIGINT to every process in foreground process group
+#
+tsh> ./mysplit 4
+Job [1] (5288) terminated by signal 2
+tsh> /bin/ps a
+    PID TTY      STAT   TIME COMMAND
+   1920 tty2     Ssl+   0:00 /usr/libexec/gdm-wayland-session env GNOME_SHELL_SESSION_MODE=ubuntu /usr/bin/gnome-session --session=ubuntu
+   1925 tty2     Sl+    0:00 /usr/libexec/gnome-session-binary --session=ubuntu
+   4970 pts/0    Ss     0:00 /usr/bin/bash --init-file /usr/share/code/resources/app/out/vs/workbench/contrib/terminal/common/scripts/shellIntegration-bash.sh
+   5121 pts/0    S+     0:00 /bin/bash ./tsh_output.sh
+   5285 pts/0    S+     0:00 /usr/bin/perl ./sdriver.pl -t trace11.txt -s ./tsh -a -p
+   5286 pts/0    S+     0:00 ./tsh -p
+   5318 pts/0    R      0:00 /bin/ps a
+./sdriver.pl -t trace12.txt -s ./tsh -a "-p"
+#
+# trace12.txt - Forward SIGTSTP to every process in foreground process group
+#
+tsh> ./mysplit 4
+Job [1] (5323) stopped by signal 20
+tsh> jobs
+[1] (5323) Stopped ./mysplit 4 
+tsh> /bin/ps a
+    PID TTY      STAT   TIME COMMAND
+   1920 tty2     Ssl+   0:00 /usr/libexec/gdm-wayland-session env GNOME_SHELL_SESSION_MODE=ubuntu /usr/bin/gnome-session --session=ubuntu
+   1925 tty2     Sl+    0:00 /usr/libexec/gnome-session-binary --session=ubuntu
+   4970 pts/0    Ss     0:00 /usr/bin/bash --init-file /usr/share/code/resources/app/out/vs/workbench/contrib/terminal/common/scripts/shellIntegration-bash.sh
+   5121 pts/0    S+     0:00 /bin/bash ./tsh_output.sh
+   5320 pts/0    S+     0:00 /usr/bin/perl ./sdriver.pl -t trace12.txt -s ./tsh -a -p
+   5321 pts/0    S+     0:00 ./tsh -p
+   5323 pts/0    T      0:00 ./mysplit 4
+   5324 pts/0    T      0:00 ./mysplit 4
+   5327 pts/0    R      0:00 /bin/ps a
+./sdriver.pl -t trace13.txt -s ./tsh -a "-p"
+#
+# trace13.txt - Restart every stopped process in process group
+#
+tsh> ./mysplit 4
+Job [1] (5332) stopped by signal 20
+tsh> jobs
+[1] (5332) Stopped ./mysplit 4 
+tsh> /bin/ps a
+    PID TTY      STAT   TIME COMMAND
+   1920 tty2     Ssl+   0:00 /usr/libexec/gdm-wayland-session env GNOME_SHELL_SESSION_MODE=ubuntu /usr/bin/gnome-session --session=ubuntu
+   1925 tty2     Sl+    0:00 /usr/libexec/gnome-session-binary --session=ubuntu
+   4970 pts/0    Ss     0:00 /usr/bin/bash --init-file /usr/share/code/resources/app/out/vs/workbench/contrib/terminal/common/scripts/shellIntegration-bash.sh
+   5121 pts/0    S+     0:00 /bin/bash ./tsh_output.sh
+   5329 pts/0    S+     0:00 /usr/bin/perl ./sdriver.pl -t trace13.txt -s ./tsh -a -p
+   5330 pts/0    S+     0:00 ./tsh -p
+   5332 pts/0    T      0:00 ./mysplit 4
+   5333 pts/0    T      0:00 ./mysplit 4
+   5350 pts/0    R      0:00 /bin/ps a
+tsh> fg %1
+tsh> /bin/ps a
+    PID TTY      STAT   TIME COMMAND
+   1920 tty2     Ssl+   0:00 /usr/libexec/gdm-wayland-session env GNOME_SHELL_SESSION_MODE=ubuntu /usr/bin/gnome-session --session=ubuntu
+   1925 tty2     Sl+    0:00 /usr/libexec/gnome-session-binary --session=ubuntu
+   4970 pts/0    Ss     0:00 /usr/bin/bash --init-file /usr/share/code/resources/app/out/vs/workbench/contrib/terminal/common/scripts/shellIntegration-bash.sh
+   5121 pts/0    S+     0:00 /bin/bash ./tsh_output.sh
+   5329 pts/0    S+     0:00 /usr/bin/perl ./sdriver.pl -t trace13.txt -s ./tsh -a -p
+   5330 pts/0    S+     0:00 ./tsh -p
+   5366 pts/0    R      0:00 /bin/ps a
+./sdriver.pl -t trace14.txt -s ./tsh -a "-p"
+#
+# trace14.txt - Simple error handling
+#
+tsh> ./bogus
+./bogus: Command not found
+tsh> ./myspin 4 &
+[1] (5373) ./myspin 4 &
+tsh> fg
+fg command requires PID or %jobid argument
+tsh> bg
+bg command requires PID or %jobid argument
+tsh> fg a
+fg: argument must be a PID or %jobid
+tsh> bg a
+bg: argument must be a PID or %jobid
+tsh> fg 9999999
+(9999999): No such process
+tsh> bg 9999999
+(9999999): No such process
+tsh> fg %2
+%2: No such job
+tsh> fg %1
+Job [1] (5373) stopped by signal 20
+tsh> bg %2
+%2: No such job
+tsh> bg %1
+[1] (5373) ./myspin 4 &
+tsh> jobs
+[1] (5373) Running ./myspin 4 &
+./sdriver.pl -t trace15.txt -s ./tsh -a "-p"
+#
+# trace15.txt - Putting it all together
+#
+tsh> ./bogus
+./bogus: Command not found
+tsh> ./myspin 10
+Job [1] (5417) terminated by signal 2
+tsh> ./myspin 3 &
+[1] (5419) ./myspin 3 &
+tsh> ./myspin 4 &
+[2] (5421) ./myspin 4 &
+tsh> jobs
+[1] (5419) Running ./myspin 3 &
+[2] (5421) Running ./myspin 4 &
+tsh> fg %1
+Job [1] (5419) stopped by signal 20
+tsh> jobs
+[1] (5419) Stopped ./myspin 3 &
+[2] (5421) Running ./myspin 4 &
+tsh> bg %3
+%3: No such job
+tsh> bg %1
+[1] (5419) ./myspin 3 &
+tsh> jobs
+[1] (5419) Running ./myspin 3 &
+[2] (5421) Running ./myspin 4 &
+tsh> fg %1
+tsh> quit
+./sdriver.pl -t trace16.txt -s ./tsh -a "-p"
+#
+# trace16.txt - Tests whether the shell can handle SIGTSTP and SIGINT
+#     signals that come from other processes instead of the terminal.
+#
+tsh> ./mystop 2
+Job [1] (5463) stopped by signal 20
+tsh> jobs
+[1] (5463) Stopped ./mystop 2
+tsh> ./myint 2
+Job [2] (5481) terminated by signal 2
